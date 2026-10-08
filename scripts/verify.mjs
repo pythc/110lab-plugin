@@ -6,11 +6,14 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const plugin = resolve(root, 'plugins/110lab');
+const pluginArgument = process.argv.indexOf('--plugin-root');
+if (pluginArgument >= 0 && (!process.argv[pluginArgument + 1] || process.argv[pluginArgument + 1].startsWith('--'))) throw new Error('--plugin-root requires a directory');
+const plugin = pluginArgument >= 0 ? resolve(process.argv[pluginArgument + 1]) : resolve(root, 'plugins/110lab');
 const json = async path => JSON.parse(await readFile(resolve(root, path), 'utf8'));
+const pluginJson = async path => JSON.parse(await readFile(resolve(plugin, path), 'utf8'));
 const release = await json('distribution.json');
-const manifest = await json('plugins/110lab/plugin.json');
-const compatibility = await json('plugins/110lab/.codex-plugin/plugin.json');
+const manifest = await pluginJson('plugin.json');
+const compatibility = await pluginJson('.codex-plugin/plugin.json');
 const marketplace = await json('.agents/plugins/marketplace.json');
 assert.equal(manifest.name, '110lab');
 assert.match(manifest.version, /^\d+\.\d+\.\d+$/);
@@ -48,8 +51,8 @@ for (const name of expected) {
   assert.doesNotMatch(text, /["'](?:client_secret|app_secret|refresh_token|personalToken|openApiKey)["']\s*:\s*["'][A-Za-z0-9_.-]{16,}["']/, 'Credential literal: ' + name);
   if (name.endsWith('.mjs')) execFileSync(process.execPath, ['--check', resolve(plugin, name)]);
 }
-const mcp = await json('plugins/110lab/mcp.json');
-assert.deepEqual(mcp.mcpServers, (await json('plugins/110lab/.mcp.json')).mcpServers);
+const mcp = await pluginJson('mcp.json');
+assert.deepEqual(mcp.mcpServers, (await pluginJson('.mcp.json')).mcpServers);
 assert.deepEqual(Object.keys(mcp.mcpServers).sort(), ['110lab', '110lab_requirements']);
 for (const server of Object.values(mcp.mcpServers)) {
   assert.equal(server.type, 'stdio');

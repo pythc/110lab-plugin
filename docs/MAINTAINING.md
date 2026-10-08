@@ -22,6 +22,8 @@
 
 `npm test` 仅启动插件包并完成 MCP 握手，不读取本机登录文件。`npm run test:live` 还会读取公网工具目录、工作台入口和 UI 资源；不会调用业务写入、邮箱或登录工具。
 
+安装后可用 `node scripts/verify.mjs --plugin-root /actual/installed/plugin` 校验实际缓存的全部文件，再用 `node scripts/smoke.mjs --live --plugin-root /actual/installed/plugin` 验证该缓存中的进程和工作台。路径使用安装命令返回的 `installedPath`，不要猜测。
+
 ## 打包
 
 ZIP 应仅包含顶层 `110lab/` 目录及其隐藏 manifest 文件。将 `plugins/110lab/` 打包，校验其文件列表与 `distribution.json` 完全一致，并为 ZIP 附上 SHA-256。GitHub 仓库目录用于市场安装，ZIP 用于归档或手动配置本地市场，不宣称所有客户端都支持直接导入 ZIP。

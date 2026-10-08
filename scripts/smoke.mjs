@@ -9,7 +9,9 @@ import { readFile } from 'node:fs/promises';
 import { once } from 'node:events';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const plugin = resolve(root, 'plugins/110lab');
+const pluginArgument = process.argv.indexOf('--plugin-root');
+if (pluginArgument >= 0 && (!process.argv[pluginArgument + 1] || process.argv[pluginArgument + 1].startsWith('--'))) throw new Error('--plugin-root requires a directory');
+const plugin = pluginArgument >= 0 ? resolve(process.argv[pluginArgument + 1]) : resolve(root, 'plugins/110lab');
 const release = JSON.parse(await readFile(resolve(root, 'distribution.json'), 'utf8'));
 const child = spawn(process.execPath, [resolve(plugin, 'mcp/portal-bridge.mjs')], { cwd: plugin, stdio: ['pipe', 'pipe', 'pipe'] });
 const pending = new Map();
