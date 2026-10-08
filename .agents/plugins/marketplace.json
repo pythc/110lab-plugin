@@ -1,0 +1,12 @@
+{
+  "name": "110lab",
+  "interface": { "displayName": "110 实验室" },
+  "plugins": [
+    {
+      "name": "110lab",
+      "source": { "source": "local", "path": "./plugins/110lab" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}

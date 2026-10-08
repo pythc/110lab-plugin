@@ -1,0 +1,24 @@
+{
+  "plugin": "110lab",
+  "version": "0.15.0",
+  "source": {
+    "repository": "https://github.com/pythc/110lab-website",
+    "commit": "71be7b72b59ba1f159828d532f510b5ce4d7534b",
+    "tree": "bd3705e14fa2eab169a34ba0f7af7061bbd4c695"
+  },
+  "files": {
+    "plugin.json": "a56703a1da2d8c74e5dc2e8f98d14e34fa926432bc5ab4b8adb5909e97c75497",
+    ".codex-plugin/plugin.json": "e1741a540223c30ba56aaa838f11fa187f511d3a3a431725d461e4bdd67212c2",
+    "mcp.json": "0e9f8e1db796f8acfadf743c99a2e2bdce25f5877aa7fc0bd160edd50648fbf3",
+    ".mcp.json": "91ffc1a6f6dfd3adbda2c25758d10ccc43efe2b651fc479a726520ce7d91d53b",
+    "assets/logo.png": "4e0638ca11d64877063c425874c387a27fc5568bfb0558c2c2cc2220d0edd452",
+    "assets/logo.svg": "1eccc7f1730fd21657d1dd0c83c26994da6854b5c7c78de9613ff61dc2a6f89d",
+    "assets/sidebar-icon.png": "d82adda7a3f3ef342eec7173db613ab5f7da295a9373d88cbd691a3c5fd9981a",
+    "assets/sidebar-icon.svg": "925a23c607cf563e71d2f755e047972512205bdb62964e9ffdc4f838842d3ed7",
+    "mcp/portal-bridge.mjs": "707624fb7660b909d587b383fb1202a3a389b2a60386e71ece4681ccb0ab5ceb",
+    "mcp/requirements-bridge.mjs": "d136c6144ceb9a81ef0e2daf923820d72cb1d24d7eb7be0cc9c85a40f5e9fab9",
+    "mcp/requirements-client.mjs": "ac48829304430680b6bcc17b9294588e0f3ea730f92bdec327bac7cccbdfe613",
+    "mcp/NOTICE.txt": "b3b3160d51ab6007744a49e8f28b507ea7b4eee95d4bcce0601f53736612316f",
+    "README.md": "01f81bfc41264749f303dc871eb794db2496bea10a3c31b483574c972deafde9"
+  }
+}

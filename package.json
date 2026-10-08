@@ -1,0 +1,15 @@
+{
+  "name": "110lab-plugin-distribution",
+  "version": "0.15.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "verify": "node scripts/verify.mjs",
+    "test": "node scripts/smoke.mjs",
+    "test:live": "node scripts/smoke.mjs --live",
+    "sync": "node scripts/sync-from-website.mjs"
+  }
+}
