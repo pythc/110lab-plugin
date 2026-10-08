@@ -53,11 +53,12 @@ codex plugin add 110lab@110lab
 需要固定或回退到本次发行版时：
 
 ```sh
+codex plugin marketplace remove 110lab
 codex plugin marketplace add pythc/110lab-plugin --ref v0.15.0
 codex plugin add 110lab@110lab
 ```
 
-需要再次跟随最新版时，将 `--ref v0.15.0` 改回 `--ref main`。同一个市场名称只使用一个来源配置。此操作只更换本机插件文件，不回滚服务器业务数据。
+需要再次跟随最新版时，重复上述三步，将 `--ref v0.15.0` 改为 `--ref main`。切换分支或 tag 时必须先移除旧来源，否则 CLI 会提示同名市场已经来自另一个来源。移除来源后重新添加并安装，不要手动删除本机登录目录；此操作不回滚服务器业务数据。
 
 ## 常见问题
 
