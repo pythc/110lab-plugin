@@ -1,0 +1,4 @@
+interface:
+  display_name: "CoBuild 跨应用协作"
+  short_description: "串联项目、需求、研发、文档与运营动作，并逐项核验交接结果"
+  default_prompt: "使用 $cobuild 串联这项工作的相关应用，按已有授权推进，并核对每一步的实际结果。"

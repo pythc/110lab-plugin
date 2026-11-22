@@ -74,7 +74,7 @@ export function createRelay({readCredentials = loadCredentials, fetchImpl = fetc
   return async payload => {
     credentials ||= readCredentials();
     const headers = {'Content-Type': 'application/json', Accept: 'application/json, text/event-stream',
-      Authorization: 'Bearer ' + credentials.openApiKey, 'X-Requirement-Mcp-Token': credentials.personalToken};
+      Authorization: 'Bearer ' + credentials.openApiKey, 'X-Requirement-Mcp-Token': credentials.personalToken,...(credentials.identityToken?{'X-Lab-Identity-Token':credentials.identityToken}:{})};
     if (sessionId) headers['Mcp-Session-Id'] = sessionId;
     if (protocolVersion) headers['MCP-Protocol-Version'] = protocolVersion;
     const abort = new AbortController();

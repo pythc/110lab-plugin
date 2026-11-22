@@ -1,0 +1,4 @@
+interface:
+  display_name: "CoBuild 知识库"
+  short_description: "维护文档和文件版本，连接研发资料、空间协作与公共邮件材料交接"
+  default_prompt: "使用 $knowledge 处理指定的知识库资料，保留版本与权限，并核对实际保存或文件结果。"

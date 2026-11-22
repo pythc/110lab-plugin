@@ -5,17 +5,14 @@
       "type": "stdio",
       "command": "node",
       "args": [
-        "${PLUGIN_ROOT}/mcp/portal-bridge.mjs"
+        "${PLUGIN_ROOT}/mcp/cobuild-bridge.mjs"
       ],
-      "cwd": "${PLUGIN_ROOT}"
-    },
-    "110lab_requirements": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "${PLUGIN_ROOT}/mcp/requirements-bridge.mjs"
-      ],
-      "cwd": "${PLUGIN_ROOT}"
+      "cwd": "${PLUGIN_ROOT}",
+      "env": {
+        "NODE_USE_SYSTEM_CA": "1",
+        "KNOWLEDGE_URL": "https://knowledge.110-lab.cn/mcp"
+      }
     }
   }
 }
+

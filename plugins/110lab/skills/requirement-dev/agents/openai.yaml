@@ -1,0 +1,6 @@
+interface:
+  display_name: "CoBuild 需求研发"
+  short_description: "串联需求读取、代码实现、自测评审与交付回写的项目研发流程"
+  default_prompt: "使用 $requirement-dev 读取这项需求，结合实际仓库完成实现、自测和 review，并把结果回写到需求平台。"
+policy:
+  allow_implicit_invocation: true

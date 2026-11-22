@@ -1,3 +1,4 @@
-# Keep generated upstream bytes and third-party license text unchanged.
-plugins/110lab/mcp/portal-bridge.mjs linguist-generated=true -whitespace
-plugins/110lab/mcp/NOTICE.txt -whitespace
+# Preserve imported release bytes, hashes and third-party license text.
+plugins/110lab/** -text -whitespace
+plugins/110lab/mcp/*.mjs linguist-generated=true -whitespace
+plugins/110lab/mcp/*NOTICE.txt -whitespace

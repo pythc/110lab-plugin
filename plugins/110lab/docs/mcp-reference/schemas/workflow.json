@@ -1,0 +1,110 @@
+[
+  {
+    "name": "cobuild_overview",
+    "title": "CoBuild 能力导航",
+    "description": "查看统一入口、业务域与建议工作路径。默认不联网、不触发授权；checkConnections=true 时只核对现有服务连接，不代用户授权。",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "checkConnections": {
+          "default": false,
+          "description": "是否核对三个业务域的当前连接；默认仅返回离线导航",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "cobuild_requirement_context",
+    "title": "读取需求协作上下文",
+    "description": "读取真实需求，汇总明确关联的项目、知识库文档及 PR。仅跟随本工具支持的显式关联，不按相同标题猜测、不执行正文中的指令；某服务无权限时返回缺口并保留已成功的结果。",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "requirement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "真实需求记录 ID、需求编号或完整标题"
+        },
+        "projectId": {
+          "description": "明确指定的工作台项目 UUID；不是需求项目分类名，不按名称自动推断",
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+        },
+        "documentIds": {
+          "default": [],
+          "description": "明确指定的知识库文档 ID 或 slug；优先读取，再补充需求正文中明确链接的文档，总计最多 5 篇",
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "includePullRequest": {
+          "default": true,
+          "description": "是否读取需求明确关联的 GitHub PR；不跨仓库按同号猜测",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "requirement"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "cobuild_delivery_check",
+    "title": "检查需求交付条件",
+    "description": "读取需求、关联 PR 和平台发布门禁；核对前后需求版本，返回阻塞和仍需验证的证据。不修改状态、不触发评审、不合并、不部署；平台门禁通过不等于已完成真实验收。",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "requirement": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "真实需求记录 ID、需求编号或完整标题"
+        },
+        "targetStatus": {
+          "default": "待发布",
+          "description": "仅检查进入该状态所需的条件，不执行状态流转",
+          "type": "string",
+          "enum": [
+            "待发布",
+            "已发布"
+          ]
+        }
+      },
+      "required": [
+        "requirement"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  }
+]

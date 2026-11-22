@@ -1,0 +1,4 @@
+interface:
+  display_name: "CoBuild 身份连接"
+  short_description: "核对统一登录和各业务域授权，恢复连接并验证真实身份与目标访问"
+  default_prompt: "使用 $identity 检查本次所需服务的身份与连接，复用有效授权并定位阻碍。"
