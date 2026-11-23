@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "plugin": "110lab",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "source": {
     "kind": "release-archive",
     "url": "https://internal.110-lab.cn/downloads/110lab-plugin-0.21.0.zip",
@@ -78,15 +78,27 @@
     },
     {
       "path": "plugin.json",
-      "reason": "Distribution patch 0.21.0 -> 0.21.1"
+      "reason": "Distribution patch 0.21.0 -> 0.21.2"
     },
     {
       "path": ".codex-plugin/plugin.json",
-      "reason": "Distribution patch 0.21.0 -> 0.21.1"
+      "reason": "Distribution patch 0.21.0 -> 0.21.2"
+    },
+    {
+      "path": "mcp/requirements-bridge.mjs",
+      "reason": "Use the shared Windows ACL-aware credential store in the installed bridge"
+    },
+    {
+      "path": "mcp/requirements-bridge.source.mjs",
+      "reason": "Use the shared credential store for the requirements bridge source"
+    },
+    {
+      "path": "mcp/requirements-client.mjs",
+      "reason": "Protect requirement identity credentials with Windows ACLs and preserve Unix mode and ownership checks"
     }
   ],
   "files": {
-    ".codex-plugin/plugin.json": "8e85ee213792890d270bb28cc7af8e184ebbf4a60c0dcc521208b53ea79af980",
+    ".codex-plugin/plugin.json": "041642b2303e5d14bd108e1bf6013c98006ee294f0c03be687b0739f4aeecd62",
     ".mcp.json": "afd38fced759e5e083383dfc270152827d32fad9b323ebcafbb411c33236b0e8",
     "README.md": "582b2fdee02515661e71dc32b99bd6dc539eb0f3d5908e42ffb6d85cc28f135c",
     "assets/logo.png": "72f02ab9b2d4d0fdfb36e8c2c5199c69ee21e0a76fa82960ab272347090cbfc0",
@@ -122,11 +134,11 @@
     "mcp/knowledge-tools.json": "42a657840a58366b3486f89d38aede2a22fe06d1692bd4a053aea5d525b4278a",
     "mcp/portal-bridge.mjs": "5e7f201904ad92024d189f22d1bb439a68b9deb4ea9d30d6f990dbcf9e0227a7",
     "mcp/requirements-NOTICE.txt": "941d555e77b9e11b53082c25e8bff3b02913e76b342fb38a0f419c790add68e3",
-    "mcp/requirements-bridge.mjs": "9d947ce1b3cd7f4237860f608107bd6ea61b2719febcd9685fc5958892e1e925",
-    "mcp/requirements-bridge.source.mjs": "807bf8987293d6db21411337717bce3a2256bc04618dc53973e103b0a4a12837",
-    "mcp/requirements-client.mjs": "046d5966ce56811be486808787c78b25598228d492e95f2c82417c38e268688e",
+    "mcp/requirements-bridge.mjs": "9a6b05aa5001ca7db594a3726428655262f3b5b1d9d4114f13b6cc9a4342f7b2",
+    "mcp/requirements-bridge.source.mjs": "bcc70495a88ae398ba3f2e72aee84bb6d9bced7ba65106fa50828662649eb458",
+    "mcp/requirements-client.mjs": "bbaf1639b9a5befd72a7a103c5912fe3fff1efc4237026d5e2165cacbcc2eec6",
     "mcp/requirements-tools.json": "20c51c1f57bfd0cb2f3b8989b41562ace43c55a98e270908d5a52dfc7355cb12",
-    "plugin.json": "6c33fec7629900367763eb203f4a042b72079465c2622e4dfb4c409cc2477e3f",
+    "plugin.json": "9220ad4998b93afaa64e85dd427ff3484cffb6745b016ca11a17077497782966",
     "skills/cobuild/SKILL.md": "f32cdbf2aa676ead96af2826ac834496b234e628cdb2ec6206a7539bdc19bbab",
     "skills/cobuild/agents/openai.yaml": "59b92400a6a7e1354ff0d26b3693c9ac79eb72cacba57fedf994718f8aa50cee",
     "skills/cobuild/references/handoffs.md": "a4e1211660926d3991b829ecd26ecbbb1f10218bc2d7038c3b1e3d1c7902f397",

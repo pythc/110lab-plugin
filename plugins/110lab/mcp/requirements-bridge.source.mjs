@@ -3,16 +3,16 @@ import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {ListToolsRequestSchema,CallToolRequestSchema} from '@modelcontextprotocol/sdk/types.js';
 import {createServer} from 'node:http';
 import {randomBytes,createHash,generateKeyPairSync,privateDecrypt,createDecipheriv,constants as cryptoConstants} from 'node:crypto';
-import {readFileSync,writeFileSync,renameSync,mkdirSync,openSync,fstatSync,closeSync,constants,lstatSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {join,dirname} from 'node:path';
 import {homedir} from 'node:os';
 import {fileURLToPath} from 'node:url';
-import {createRelay,ENDPOINT} from './requirements-client.mjs';
+import {createRelay,ENDPOINT,loadIdentityCredential,saveIdentityCredential} from './requirements-client.mjs';
 const ISSUER='https://internal.110-lab.cn',PLATFORM='https://fcncvoyreb8p.feishuapp.com/app/app_17b6pxwde0x';
 const root=dirname(fileURLToPath(import.meta.url)),file=join(process.env.LAB_REQUIREMENTS_AUTH_DIR||join(homedir(),'.config','110lab-requirements'),'identity.json');
 const nonce=()=>randomBytes(32).toString('base64url');
-function load(){let fd;try{fd=openSync(file,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);}catch(e){if(e.code==='ENOENT')return;throw new Error('无法读取需求连接');}try{const st=fstatSync(fd);if(!st.isFile()||st.size>32768||st.mode&0o077||process.getuid&&st.uid!==process.getuid())throw new Error();const v=JSON.parse(readFileSync(fd,'utf8'));if(v.version!==2||v.endpoint!==ENDPOINT||!/^[\w-]{43}$/.test(v.identityToken)||!v.personalToken?.startsWith('rmcp_v1.')||typeof v.openApiKey!=='string'||!v.openApiKey||!Number.isFinite(Date.parse(v.expiresAt)))throw new Error();return v;}catch{throw new Error('需求连接文件无效');}finally{closeSync(fd);}}
-function save(v){mkdirSync(dirname(file),{mode:0o700,recursive:true});const d=lstatSync(dirname(file));if(!d.isDirectory()||d.isSymbolicLink()||d.mode&0o077||process.getuid&&d.uid!==process.getuid())throw new Error('连接目录权限无效');load();const tmp=file+'.'+randomBytes(8).toString('hex');writeFileSync(tmp,JSON.stringify(v),{flag:'wx',mode:0o600});renameSync(tmp,file);}
+function load(){return loadIdentityCredential(file);}
+function save(v){saveIdentityCredential(file,v);}
 async function privateRequest(url,body){if(![ISSUER+'/api/identity/exchange',ISSUER+'/api/identity/requirements/connect',ISSUER+'/api/identity/requirements/ticket',ISSUER+'/api/identity/inspect'].includes(url))throw new Error();const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(15000)});if(r.status===410){await r.body?.cancel();throw Object.assign(new Error('需求连接已停用，请在需求平台恢复连接后再试。'),{safeMessage:'需求连接已停用，请在需求平台恢复连接后再试。'});}if(r.status===412){await r.body?.cancel();throw Object.assign(new Error('首次平台连接尚未完成'),{needsNative:true});}if(!r.ok){await r.body?.cancel();throw new Error([401,403].includes(r.status)?'连接已失效，请重新连接':'统一认证服务暂时不可用，请稍后重试');}const parts=[];let size=0;for await(const p of r.body){if((size+=p.length)>32768)throw new Error('连接响应无效');parts.push(p);}return JSON.parse(Buffer.concat(parts));}
 let saved=load(),job,relay,sequence=1;
 async function start(){if(job&&!job.done)return {connected:false,authorizationUrl:job.url};const j={state:nonce(),verifier:nonce(),done:false};job=j;

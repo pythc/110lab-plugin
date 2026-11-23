@@ -17,11 +17,14 @@ async function fixture(t) {
   return root;
 }
 const hashTree = async root => Object.fromEntries([...await readClient(join(root, 'plugins/110lab'), expected)].map(([name, bytes]) => [name, digest(bytes)]));
-const provenance = { kind: 'release-archive', url: 'https://internal.110-lab.cn/downloads/110lab-plugin-0.21.1.zip', sha256: 'a'.repeat(64) };
+const currentVersion = validateClient(original).version;
+const [major, minor, patch] = currentVersion.split('.').map(Number);
+const newerVersion = [major, minor, patch + 1].join('.');
+const provenance = { kind: 'release-archive', url: 'https://internal.110-lab.cn/downloads/110lab-plugin-' + currentVersion + '.zip', sha256: 'a'.repeat(64) };
 
 test('retains all skills, documentation, schemas, bridge files and legal notices', () => {
-  assert.equal(original.size, 61); assert.equal(validateClient(original).version, '0.21.1');
-  const updated = prepareClient(original, '0.21.2');
+  assert.equal(original.size, 61);
+  const updated = prepareClient(original, newerVersion);
   assert.deepEqual([...updated.files.keys()].sort(), expected);
   for (const [name, bytes] of original) if (!['plugin.json', '.codex-plugin/plugin.json'].includes(name)) assert.deepEqual(updated.files.get(name), bytes);
 });
@@ -30,28 +33,28 @@ test('catches the observed runtime-version drift and fixes only an explicit new 
   const source = new Map(original);
   source.set('mcp/cobuild-bridge.mjs', Buffer.from('const release=Object.freeze({version:"0.20.4",url:"https://internal.110-lab.cn/plugin-update",downloadUrl:"https://internal.110-lab.cn/downloads/110lab-plugin-0.20.4.zip"});export{release};'));
   assert.throws(() => prepareClient(source), /use a new patch/);
-  const fixed = prepareClient(source, '0.21.2');
+  const fixed = prepareClient(source, newerVersion);
   assert.match(fixed.files.get('mcp/cobuild-bridge.mjs').toString(), /new URL\("\.\.\/plugin.json"/);
   assert.match(fixed.files.get('mcp/cobuild-bridge.mjs').toString(), /github.com\/pythc\/110lab-plugin\/releases/);
-  assert.equal(JSON.parse(fixed.files.get('plugin.json')).version, '0.21.2');
+  assert.equal(JSON.parse(fixed.files.get('plugin.json')).version, newerVersion);
   assert.throws(() => prepareClient(original, '0.20.0'), /downgrade/);
 });
 
 test('new release updates the complete directory, hashes, root package and lock metadata', async t => {
   const root = await fixture(t), before = await hashTree(root);
-  const result = await syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance, version: '0.21.2' });
+  const result = await syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance, version: newerVersion });
   assert.equal(result.files, 61);
   const dist = JSON.parse(await readFile(join(root, 'distribution.json'))), lock = JSON.parse(await readFile(join(root, 'package-lock.json')));
-  assert.equal(dist.schemaVersion, 2); assert.equal(dist.source.version, '0.21.1'); assert.equal(dist.version, '0.21.2');
-  assert.equal(JSON.parse(await readFile(join(root, 'package.json'))).version, '0.21.2');
-  assert.equal(lock.version, '0.21.2'); assert.equal(lock.packages[''].version, '0.21.2');
+  assert.equal(dist.schemaVersion, 2); assert.equal(dist.source.version, currentVersion); assert.equal(dist.version, newerVersion);
+  assert.equal(JSON.parse(await readFile(join(root, 'package.json'))).version, newerVersion);
+  assert.equal(lock.version, newerVersion); assert.equal(lock.packages[''].version, newerVersion);
   assert.deepEqual(dist.originalFiles, before); assert.deepEqual(dist.files, await hashTree(root));
   // Repeat the identical import; a release cannot acquire new bytes under the same version.
-  await syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance, version: '0.21.2' });
+  await syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance, version: newerVersion });
   const source = join(root, 'bad-source'); await cp(resolve(repo, 'plugins/110lab'), source, { recursive: true });
   await writeFile(join(source, 'README.md'), 'Changed after publication');
   const hashes = await hashTree(root);
-  await assert.rejects(syncClient({ root, sourceDirectory: source, provenance, version: '0.21.2' }), /different bytes/);
+  await assert.rejects(syncClient({ root, sourceDirectory: source, provenance, version: newerVersion }), /different bytes/);
   assert.deepEqual(await hashTree(root), hashes);
 });
 
@@ -63,7 +66,7 @@ test('an incomplete or unexpected input fails before replacing the current packa
     if (mode === 'missing') await rm(join(source, 'mcp/knowledge-tools.json'));
     if (mode === 'extra') await writeFile(join(source, 'unreviewed.txt'), 'not in package');
     if (mode === 'symlink') { await rm(join(source, 'README.md')); await symlink(join(repo, 'README.md'), join(source, 'README.md')); }
-    await assert.rejects(syncClient({ root, sourceDirectory: source, provenance, version: '0.21.2' }));
+    await assert.rejects(syncClient({ root, sourceDirectory: source, provenance, version: newerVersion }));
     assert.deepEqual(await hashTree(root), before); assert.deepEqual(await readFile(join(root, 'distribution.json')), metadata);
   }
 });
@@ -113,10 +116,10 @@ test('extracts complete archives and rejects partial updates, extra paths and du
 
 test('refuses a stale release or unverifiable source before changing a package', async t => {
   const root = await fixture(t), before = await hashTree(root), distPath = join(root, 'distribution.json');
-  await assert.rejects(syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance: { ...provenance, sha256: 'invalid' }, version: '0.21.2' }));
+  await assert.rejects(syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance: { ...provenance, sha256: 'invalid' }, version: newerVersion }));
   assert.deepEqual(await hashTree(root), before);
   const dist = JSON.parse(await readFile(distPath)); dist.version = '0.22.0'; await writeFile(distPath, JSON.stringify(dist));
-  await assert.rejects(syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance, version: '0.21.2' }), /downgrade/);
+  await assert.rejects(syncClient({ root, sourceDirectory: resolve(repo, 'plugins/110lab'), provenance, version: newerVersion }), /downgrade/);
   assert.deepEqual(await hashTree(root), before);
 });
 
@@ -133,10 +136,10 @@ test('the Git entrypoint rebuilds and records the real commit, and rejects dirty
   git('remote', 'add', 'origin', 'https://github.com/pythc/110lab-website.git'); git('add', '.'); git('commit', '-qm', 'fixture');
   await mkdir(join(upstream, 'artifacts/plugin'), { recursive: true });
   await writeFile(join(upstream, 'artifacts/plugin/stale.txt'), 'must not survive a rebuild');
-  const invoke = () => execFileSync(process.execPath, [join(root, 'scripts/sync-from-website.mjs'), upstream, '--version', '0.21.2'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const invoke = () => execFileSync(process.execPath, [join(root, 'scripts/sync-from-website.mjs'), upstream, '--version', newerVersion], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   invoke(); const dist = JSON.parse(await readFile(join(root, 'distribution.json')));
   assert.equal(dist.source.kind, 'git'); assert.equal(dist.source.commit, git('rev-parse', 'HEAD')); assert.equal(dist.source.tree, git('rev-parse', 'HEAD^{tree}'));
-  assert.equal(dist.version, '0.21.2');
+  assert.equal(dist.version, newerVersion);
   const before = await hashTree(root);
   await writeFile(join(upstream, 'untracked.mjs'), 'unreviewed'); assert.throws(invoke); await rm(join(upstream, 'untracked.mjs'));
   git('remote', 'set-url', 'origin', 'https://github.com/example/other.git'); assert.throws(invoke);

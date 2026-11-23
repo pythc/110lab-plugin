@@ -2,10 +2,135 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 
 export const ENDPOINT = 'https://fcncvoyreb8p.feishuapp.com/app/app_17b6pxwde0x/openapi/mcp';
 const MAX_RESPONSE = 8 * 1024 * 1024;
 const DEFAULT_CREDENTIAL_FILE = path.join(os.homedir(), '.config', '110-requirement-mcp', 'credentials.json');
+
+const windows = process.platform === 'win32';
+const windowsAclScript = String.raw`
+$ErrorActionPreference = 'Stop'
+$target = $env:LAB_REQUIREMENTS_ACL_PATH
+$user = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$system = [System.Security.Principal.SecurityIdentifier]::new('S-1-5-18')
+$sidType = [System.Security.Principal.SecurityIdentifier]
+
+function Assert-PrivateAcl($item) {
+  if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) { throw 'Reparse point' }
+  $acl = $item.GetAccessControl()
+  $owner = $acl.GetOwner($sidType)
+  $rules = @($acl.GetAccessRules($true, $true, $sidType))
+  if ($owner -notin @($user, $system) -or !$rules.Count -or ($item.PSIsContainer -and !$acl.AreAccessRulesProtected)) {
+    throw 'Credential ACL is not private'
+  }
+  foreach ($rule in $rules) {
+    if ($rule.AccessControlType -eq 'Allow' -and $rule.IdentityReference -notin @($user, $system)) {
+      throw 'Credential ACL grants access to another account'
+    }
+  }
+}
+
+if ($env:LAB_REQUIREMENTS_ACL_ACTION -eq 'prepare') {
+  $security = [System.Security.AccessControl.DirectorySecurity]::new()
+  $security.SetOwner($user)
+  $security.SetAccessRuleProtection($true, $false)
+  foreach ($sid in @($user, $system)) {
+    $rule = [System.Security.AccessControl.FileSystemAccessRule]::new(
+      $sid, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+    $security.AddAccessRule($rule)
+  }
+  [void][System.IO.Directory]::CreateDirectory($target, $security)
+  $directory = Get-Item -LiteralPath $target -Force
+  try { Assert-PrivateAcl $directory }
+  catch {
+    # Recover an empty directory left by a failed first login.
+    if ($directory.Attributes -band [System.IO.FileAttributes]::ReparsePoint -or
+        $directory.GetAccessControl().GetOwner($sidType) -ne $user -or
+        @(Get-ChildItem -LiteralPath $target -Force | Select-Object -First 1).Count) { throw }
+    $existing = $directory.GetAccessControl('Access')
+    $existing.SetSecurityDescriptorSddlForm($security.GetSecurityDescriptorSddlForm('Access'), 'Access')
+    $directory.SetAccessControl($existing)
+    Assert-PrivateAcl $directory
+  }
+} else {
+  Assert-PrivateAcl (Get-Item -LiteralPath ([System.IO.Path]::GetDirectoryName($target)) -Force)
+  Assert-PrivateAcl (Get-Item -LiteralPath $target -Force)
+}
+`;
+
+function checkWindowsAcl(target, action) {
+  const systemRoot = process.env.SystemRoot || process.env.WINDIR;
+  const invalid = action === 'prepare' ? '连接目录权限无效' : '需求连接文件权限无效';
+  if (!systemRoot || !path.isAbsolute(systemRoot)) throw new Error(invalid);
+  try {
+    execFileSync(path.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe'), [
+      '-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(windowsAclScript, 'utf16le').toString('base64'),
+    ], {
+      env: { ...process.env, LAB_REQUIREMENTS_ACL_PATH: path.resolve(target), LAB_REQUIREMENTS_ACL_ACTION: action },
+      stdio: 'ignore', windowsHide: true, timeout: 10000,
+    });
+  } catch {
+    throw Object.assign(new Error(invalid), { safeMessage: `${invalid}。请确认凭据目录仅允许当前 Windows 账户和 SYSTEM 访问。` });
+  }
+}
+
+function hasPrivateUnixMode(stat) {
+  return (stat.mode & 0o077) === 0 && (!process.getuid || stat.uid === process.getuid());
+}
+
+export function loadIdentityCredential(file) {
+  if (windows) {
+    if (!fs.lstatSync(file, { throwIfNoEntry: false })) return;
+    checkWindowsAcl(file, 'check');
+  }
+  let fd;
+  try { fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK); }
+  catch (error) {
+    if (error.code === 'ENOENT') return;
+    throw new Error('无法读取需求连接');
+  }
+  try {
+    const stat = fs.fstatSync(fd);
+    if (!stat.isFile() || stat.size > 32768 || (!windows && !hasPrivateUnixMode(stat))) throw new Error();
+    const value = JSON.parse(fs.readFileSync(fd, 'utf8'));
+    if (value.version !== 2 || value.endpoint !== ENDPOINT || !/^[\w-]{43}$/.test(value.identityToken) ||
+        !value.personalToken?.startsWith('rmcp_v1.') || typeof value.openApiKey !== 'string' || !value.openApiKey ||
+        !Number.isFinite(Date.parse(value.expiresAt))) throw new Error();
+    return value;
+  } catch {
+    throw new Error('需求连接文件无效');
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+export function saveIdentityCredential(file, value) {
+  const directory = path.dirname(file);
+  if (windows) checkWindowsAcl(directory, 'prepare');
+  else {
+    fs.mkdirSync(directory, { mode: 0o700, recursive: true });
+    const stat = fs.lstatSync(directory);
+    if (!stat.isDirectory() || !hasPrivateUnixMode(stat)) throw new Error('连接目录权限无效');
+  }
+  loadIdentityCredential(file);
+  const temporary = file + '.' + randomBytes(8).toString('hex');
+  const fd = fs.openSync(temporary, 'wx', 0o600);
+  try {
+    try {
+      // Check the ACL the temporary file inherited before writing any credentials.
+      if (windows) checkWindowsAcl(temporary, 'check');
+      fs.writeFileSync(fd, JSON.stringify(value));
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(temporary, file);
+  } catch (error) {
+    fs.rmSync(temporary, { force: true });
+    throw error;
+  }
+}
 
 export function loadCredentials(file = DEFAULT_CREDENTIAL_FILE) {
   let fd;
