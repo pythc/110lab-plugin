@@ -7,6 +7,7 @@ import test from 'node:test';
 import { handleLabPluginUpdate } from '../scripts/plugin-update.mjs';
 
 const releaseApi = 'https://api.github.com/repos/pythc/110lab-plugin/releases/latest';
+const assetApi = 'https://api.github.com/repos/pythc/110lab-plugin/releases/assets/42';
 const packageBytes = Buffer.from('test archive bytes');
 const sha256 = createHash('sha256').update(packageBytes).digest('hex');
 
@@ -16,7 +17,7 @@ function release(version) {
   return {
     tag_name: tag, draft: false, prerelease: false,
     assets: [{
-      name, state: 'uploaded', size: packageBytes.length, digest: 'sha256:' + sha256,
+      id: 42, name, state: 'uploaded', size: packageBytes.length, digest: 'sha256:' + sha256,
       browser_download_url: `https://github.com/pythc/110lab-plugin/releases/download/${tag}/${name}`,
     }],
   };
@@ -41,11 +42,13 @@ test('downloads a matching archive and returns its complete-package installation
   const temporaryRoot = await mkdtemp(join(tmpdir(), '110lab-update-test-'));
   t.after(() => rm(temporaryRoot, { recursive: true, force: true }));
   const latest = release('0.22.0');
-  const archiveUrl = latest.assets[0].browser_download_url;
   const assetUrl = 'https://release-assets.githubusercontent.com/fixture';
-  const fetchImpl = async url => {
+  const fetchImpl = async (url, options) => {
     if (url === releaseApi) return Response.json(latest);
-    if (url.href === archiveUrl) return Response.redirect(assetUrl);
+    if (url.href === assetApi) {
+      assert.equal(options.headers.Accept, 'application/octet-stream');
+      return Response.redirect(assetUrl);
+    }
     assert.equal(url.href, assetUrl);
     return new Response(packageBytes);
   };
@@ -68,7 +71,7 @@ test('rejects corrupted downloads and redirects away from the release hosts', as
   ]) {
     const fetchImpl = async url => {
       if (url === releaseApi) return Response.json(latest);
-      assert.equal(url.href, latest.assets[0].browser_download_url);
+      assert.equal(url.href, assetApi);
       return response();
     };
     const result = await handleLabPluginUpdate({ action: 'download' }, { installedVersion: '0.21.3', fetchImpl, temporaryRoot });

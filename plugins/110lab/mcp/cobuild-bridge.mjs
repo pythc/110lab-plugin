@@ -11,7 +11,7 @@ const labUpdateRepo = 'pythc/110lab-plugin';
 const labUpdateReleaseApi = `https://api.github.com/repos/${labUpdateRepo}/releases/latest`;
 const labUpdateMaxPackageSize = 32 * 1024 * 1024;
 const labUpdateVersionPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
-const labUpdateDownloadHosts = new Set(['github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com']);
+const labUpdateDownloadHosts = new Set(['api.github.com', 'github.com', 'release-assets.githubusercontent.com', 'objects.githubusercontent.com']);
 const labUpdateMarketplace = {
   name: '110lab',
   interface: { displayName: '110 实验室' },
@@ -63,7 +63,11 @@ async function fetchLabUpdateArchive(url, fetchImpl) {
   for (let redirects = 0; redirects < 4; redirects++) {
     if (url.protocol !== 'https:' || !labUpdateDownloadHosts.has(url.hostname) ||
         url.username || url.password || url.port) throw new Error('Unexpected release download host');
-    const response = await fetchImpl(url, { redirect: 'manual', signal });
+    const response = await fetchImpl(url, {
+      headers: { Accept: 'application/octet-stream', 'User-Agent': '110lab-plugin-update' },
+      redirect: 'manual',
+      signal,
+    });
     if (response.ok && response.body) return response.body;
     const location = response.headers.get('location');
     await response.body?.cancel();
@@ -80,7 +84,8 @@ async function saveLabUpdateArchive(asset, fetchImpl, temporaryRoot) {
   let size = 0;
   const hash = labUpdateCreateHash('sha256');
   try {
-    const body = await fetchLabUpdateArchive(new URL(asset.browser_download_url), fetchImpl);
+    const url = new URL(`https://api.github.com/repos/${labUpdateRepo}/releases/assets/${asset.id}`);
+    const body = await fetchLabUpdateArchive(url, fetchImpl);
     const checksum = new LabUpdateTransform({
       transform(chunk, encoding, done) {
         size += chunk.length;
@@ -146,6 +151,7 @@ export async function handleLabPluginUpdate(args, { installedVersion, fetchImpl 
   const downloadUrl = `https://github.com/${labUpdateRepo}/releases/download/${tag}/${name}`;
   const asset = Array.isArray(release.assets) ? release.assets.find(candidate => candidate?.name === name) : undefined;
   if (!asset || asset.state !== 'uploaded' || asset.browser_download_url !== downloadUrl ||
+      !Number.isSafeInteger(asset.id) || asset.id < 1 ||
       !Number.isSafeInteger(asset.size) || asset.size < 1 || asset.size > labUpdateMaxPackageSize ||
       typeof asset.digest !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(asset.digest)) {
     return labUpdateToolResult({ ...details, updateAvailable: true, status: 'package_unavailable', message: '新版尚未提供可下载且带 SHA-256 的完整插件包。' }, true);
