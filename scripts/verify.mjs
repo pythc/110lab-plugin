@@ -42,4 +42,4 @@ assert.equal(new Set(names).size, names.length);
 assert.deepEqual(Object.keys(catalog).sort(), ['knowledge', 'portal', 'requirements']);
 assert.ok(files.get('mcp/NOTICE.txt').toString().includes('Package: @modelcontextprotocol/sdk'));
 console.log(JSON.stringify({ verified: true, version: release.version, files: expected.length,
-  skills: 5, tools: names.length + 3, source: release.source.kind, sensitiveScreen: !process.argv.includes('--integrity-only') }));
+  skills: 5, tools: names.length + 4, source: release.source.kind, sensitiveScreen: !process.argv.includes('--integrity-only') }));

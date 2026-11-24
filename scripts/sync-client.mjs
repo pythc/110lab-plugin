@@ -4,13 +4,16 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { clientFiles, readClient, validateClient, digest, compareVersions, validateSource } from './package-files.mjs';
+import { embedPluginUpdate } from './embed-plugin-update.mjs';
 
 export function prepareClient(input, version) {
   const files = new Map([...input].map(([name, bytes]) => [name, Buffer.from(bytes)]));
   const source = validateClient(files), changes = [];
   version ||= source.version; assert.match(version, /^\d+\.\d+\.\d+$/);
   assert.ok(compareVersions(version, source.version) >= 0, 'Version downgrade is not supported');
-  const bridge = files.get('mcp/cobuild-bridge.mjs').toString('utf8');
+  const bridgePath = 'mcp/cobuild-bridge.mjs';
+  const bridge = files.get(bridgePath).toString('utf8');
+  let bundled = bridge;
   const pattern = /Object\.freeze\(\{version:"([\d.]+)",url:"https:\/\/internal\.110-lab\.cn\/plugin-update",downloadUrl:"https:\/\/internal\.110-lab\.cn\/downloads\/110lab-plugin-[\d.]+\.zip"\}\)/g;
   const matches = [...bridge.matchAll(pattern)];
   assert.ok(matches.length <= 1, 'Ambiguous runtime release constant');
@@ -18,9 +21,15 @@ export function prepareClient(input, version) {
     assert.ok(compareVersions(version, source.version) > 0, 'Runtime version differs from the manifest; use a new patch --version');
     const prefix = '// 110lab distribution: runtime version follows plugin.json.\nimport {readFileSync as __distributionReadFileSync} from "node:fs";\n';
     const runtime = 'Object.freeze((()=>{const version=JSON.parse(__distributionReadFileSync(new URL("../plugin.json",import.meta.url),"utf8")).version;return{version,url:"https://github.com/pythc/110lab-plugin/releases/latest",downloadUrl:`https://github.com/pythc/110lab-plugin/releases/download/v${version}/110lab-plugin-${version}.zip`};})())';
-    files.set('mcp/cobuild-bridge.mjs', Buffer.from(prefix + bridge.replace(matches[0][0], runtime)));
-    changes.push({ path: 'mcp/cobuild-bridge.mjs', reason: 'Read the installed version from plugin.json; preserve the existing bridge behavior' });
+    bundled = prefix + bundled.replace(matches[0][0], runtime);
+    changes.push({ path: bridgePath, reason: 'Read the installed version from plugin.json; preserve the existing bridge behavior' });
   }
+  if (compareVersions(version, '0.21.3') >= 0) {
+    const updated = embedPluginUpdate(bundled);
+    if (updated !== bundled) changes.push({ path: bridgePath, reason: 'Expose the 110lab release check and download tool' });
+    bundled = updated;
+  }
+  if (bundled !== bridge) files.set(bridgePath, Buffer.from(bundled));
   if (version !== source.version) {
     for (const name of ['plugin.json', '.codex-plugin/plugin.json']) {
       const manifest = JSON.parse(files.get(name)); manifest.version = version;

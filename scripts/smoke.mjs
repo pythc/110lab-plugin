@@ -45,8 +45,13 @@ try {
   const catalog = await request('tools/list'), names = catalog.tools.map(t => t.name);
   assert.equal(new Set(names).size, names.length);
   const domains = JSON.parse(await readFile(resolve(plugin, 'mcp/cobuild-tools.json'), 'utf8'));
-  const expected = [...Object.values(domains).flat().map(t => t.name), 'cobuild_overview', 'cobuild_requirement_context', 'cobuild_delivery_check'];
+  const expected = [...Object.values(domains).flat().map(t => t.name), 'cobuild_overview', 'cobuild_requirement_context', 'cobuild_delivery_check', 'lab_plugin_update'];
   assert.deepEqual(names.toSorted(), expected.toSorted());
+  const update = catalog.tools.find(tool => tool.name === 'lab_plugin_update');
+  assert.deepEqual(update.inputSchema.properties.action.enum, ['check', 'download']);
+  assert.ok(update.description.includes('codex plugin add 110lab@110lab'));
+  const invalidUpdate = await request('tools/call', { name: 'lab_plugin_update', arguments: { action: 'install' } });
+  assert.equal(invalidUpdate.isError, true);
   const overview = await request('tools/call', { name: 'cobuild_overview', arguments: { checkConnections: false } });
   assert.ok(!overview.isError);
   const content = JSON.parse(overview.content.find(c => c.type === 'text').text);

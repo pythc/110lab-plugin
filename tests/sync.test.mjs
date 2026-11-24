@@ -31,11 +31,17 @@ test('retains all skills, documentation, schemas, bridge files and legal notices
 
 test('catches the observed runtime-version drift and fixes only an explicit new patch', () => {
   const source = new Map(original);
-  source.set('mcp/cobuild-bridge.mjs', Buffer.from('const release=Object.freeze({version:"0.20.4",url:"https://internal.110-lab.cn/plugin-update",downloadUrl:"https://internal.110-lab.cn/downloads/110lab-plugin-0.20.4.zip"});export{release};'));
+  source.set('mcp/cobuild-bridge.mjs', Buffer.from([
+    'const release=Object.freeze({version:"0.20.4",url:"https://internal.110-lab.cn/plugin-update",downloadUrl:"https://internal.110-lab.cn/downloads/110lab-plugin-0.20.4.zip"});',
+    'const server=new Server({name:"110lab-cobuild",version:release.version});',
+    'server.list(()=>({tools:[...workflows,...Object.values(catalogs).flat()]}));',
+    'server.call(req=>{let{name:tool,arguments:args={}}=req.params;if(workflows.some(item=>item.name===tool))return;});',
+  ].join('\n')));
   assert.throws(() => prepareClient(source), /use a new patch/);
   const fixed = prepareClient(source, newerVersion);
   assert.match(fixed.files.get('mcp/cobuild-bridge.mjs').toString(), /new URL\("\.\.\/plugin.json"/);
   assert.match(fixed.files.get('mcp/cobuild-bridge.mjs').toString(), /github.com\/pythc\/110lab-plugin\/releases/);
+  assert.match(fixed.files.get('mcp/cobuild-bridge.mjs').toString(), /handleLabPluginUpdate\(args,\{installedVersion:release\.version\}\)/);
   assert.equal(JSON.parse(fixed.files.get('plugin.json')).version, newerVersion);
   assert.throws(() => prepareClient(original, '0.20.0'), /downgrade/);
 });

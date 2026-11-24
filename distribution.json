@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "plugin": "110lab",
-  "version": "0.21.2",
+  "version": "0.21.3",
   "source": {
     "kind": "release-archive",
     "url": "https://internal.110-lab.cn/downloads/110lab-plugin-0.21.0.zip",
@@ -74,15 +74,15 @@
   "changes": [
     {
       "path": "mcp/cobuild-bridge.mjs",
-      "reason": "Read the installed version from plugin.json; preserve the existing bridge behavior"
+      "reason": "Read the installed version from plugin.json and expose the 110lab release check and download tool"
     },
     {
       "path": "plugin.json",
-      "reason": "Distribution patch 0.21.0 -> 0.21.2"
+      "reason": "Distribution patch 0.21.0 -> 0.21.3"
     },
     {
       "path": ".codex-plugin/plugin.json",
-      "reason": "Distribution patch 0.21.0 -> 0.21.2"
+      "reason": "Distribution patch 0.21.0 -> 0.21.3"
     },
     {
       "path": "mcp/requirements-bridge.mjs",
@@ -98,7 +98,7 @@
     }
   ],
   "files": {
-    ".codex-plugin/plugin.json": "041642b2303e5d14bd108e1bf6013c98006ee294f0c03be687b0739f4aeecd62",
+    ".codex-plugin/plugin.json": "223cd73c7551799af7a46e8415cadca98c63ad314c05aa87499f02aa3112b961",
     ".mcp.json": "afd38fced759e5e083383dfc270152827d32fad9b323ebcafbb411c33236b0e8",
     "README.md": "582b2fdee02515661e71dc32b99bd6dc539eb0f3d5908e42ffb6d85cc28f135c",
     "assets/logo.png": "72f02ab9b2d4d0fdfb36e8c2c5199c69ee21e0a76fa82960ab272347090cbfc0",
@@ -123,7 +123,7 @@
     "docs/mcp-reference/workflow.md": "0a29f83cf6387545f3b1d0ffa7a97f0a2da489e0a3541a310fb904b22edb419f",
     "mcp.json": "570f3298a3d56630c2e90431b1dad122bd83aef2f4fdd25bc5ba290f6d4b9e5c",
     "mcp/NOTICE.txt": "b3b3160d51ab6007744a49e8f28b507ea7b4eee95d4bcce0601f53736612316f",
-    "mcp/cobuild-bridge.mjs": "0c65077fe3981610250754fb17f8a7ab0f60217332e5c4e5d83d4c0b00d5a894",
+    "mcp/cobuild-bridge.mjs": "08dff760bb8df4404274a4b21d410c558b6485c9bd373583ec0889e6588e1fad",
     "mcp/cobuild-tools.json": "e721744d4364a5a7b1efa9d61c242fcbc58a28a8d9bb637bbb673c8bb6c40233",
     "mcp/knowledge-LICENSE.txt": "8486a10c4393cee1c25392769ddd3b2d6c242d6ec7928e1414efff7dfb2f07ef",
     "mcp/knowledge-NOTICE.txt": "415d89437bbc6a06294944defa87601c653cc20dfffd3b4f82733c4fe0852b92",
@@ -138,7 +138,7 @@
     "mcp/requirements-bridge.source.mjs": "bcc70495a88ae398ba3f2e72aee84bb6d9bced7ba65106fa50828662649eb458",
     "mcp/requirements-client.mjs": "bbaf1639b9a5befd72a7a103c5912fe3fff1efc4237026d5e2165cacbcc2eec6",
     "mcp/requirements-tools.json": "20c51c1f57bfd0cb2f3b8989b41562ace43c55a98e270908d5a52dfc7355cb12",
-    "plugin.json": "9220ad4998b93afaa64e85dd427ff3484cffb6745b016ca11a17077497782966",
+    "plugin.json": "6b7974da1a7cdad38a920d7dcd2c40443235519441543cf0469d0430d75cccde",
     "skills/cobuild/SKILL.md": "f32cdbf2aa676ead96af2826ac834496b234e628cdb2ec6206a7539bdc19bbab",
     "skills/cobuild/agents/openai.yaml": "59b92400a6a7e1354ff0d26b3693c9ac79eb72cacba57fedf994718f8aa50cee",
     "skills/cobuild/references/handoffs.md": "a4e1211660926d3991b829ecd26ecbbb1f10218bc2d7038c3b1e3d1c7902f397",
