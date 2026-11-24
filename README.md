@@ -1,10 +1,12 @@
 # 110lab 插件
 
-110 实验室工作台的 GitHub 安装源。当前版本 **0.21.3**，包含统一 MCP、工作台、需求平台、WeKnow、5 个 Skills 和接口参考文档。
+110 实验室工作台的 GitHub 安装源。当前版本 **0.21.4**，包含统一 MCP、工作台、需求平台、WeKnow、5 个 Skills 和接口参考文档。
 
-功能基于已发布的 0.21.0。0.21.3 在统一 MCP 中加入检查和下载完整更新包的工具。
+0.21.4 为 WorkBuddy、DeepSeek Harness 和其他本地 MCP 客户端提供通用自动更新安装包。
 
 ## 安装
+
+WorkBuddy、DeepSeek Harness 和其他支持本地 MCP 的客户端可以下载 [通用安装包](https://github.com/pythc/110lab-plugin/releases/latest)。配置一次后，启动 110lab 时自动检查并安装新版。[通用 MCP 使用指南](docs/PORTABLE-MCP.md)
 
 准备 Git、**Node.js 22 或更新版本**（建议 24.x），以及支持 `codex plugin` 的 Codex CLI。安装命令已按本机 CLI **0.169.0** 的帮助核对。
 

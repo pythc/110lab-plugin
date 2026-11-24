@@ -18,5 +18,6 @@ with zipfile.ZipFile(out,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) a
   item=zipfile.ZipInfo('110lab/'+name,date_time=(1980,1,1,0,0,0));item.create_system=3;item.external_attr=0o100644<<16;item.compress_type=zipfile.ZIP_DEFLATED
   z.writestr(item,(pathlib.Path(root)/name).read_bytes(),compresslevel=9)
 `;
-execFileSync('python3', ['-c', code, resolve(root, 'plugins/110lab'), archive, JSON.stringify([...files.keys()].sort())]);
+execFileSync(process.platform === 'win32' ? 'python' : 'python3',
+  ['-c', code, resolve(root, 'plugins/110lab'), archive, JSON.stringify([...files.keys()].sort())]);
 console.log(JSON.stringify({ archive, version: release.version, files: files.size, sha256: digest(await readFile(archive)) }));

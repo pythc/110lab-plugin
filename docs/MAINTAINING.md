@@ -62,6 +62,7 @@ npm run sync -- /absolute/path/to/110lab-website --version 0.21.2
 npm run verify:integrity
 npm test
 npm run package
+npm run package:portable
 ```
 
 `verify:integrity` 检查布局、哈希、来源、JSON/YAML、MCP 配置与语法。默认 `npm run verify` 还保留仓库原有的敏感字面量筛查；它不代表完整安全审计。按任务授权选择检查范围，不能删除或绕过发行 CI 的既有检查。
@@ -74,7 +75,7 @@ npm run package
 
 1. 在独立分支同步、运行检查、自行 review；核对原始包与 `distribution.json` 的变化。
 2. 推送候选分支，确认 Node.js 22/24 CI 通过；再将经检查的同一个提交合入 `main`，不可强推覆盖他人提交。
-3. 在通过 CI 的提交建立新的 `v版本号` tag；上传 `npm run package` 生成的 ZIP 和 SHA-256 清单到 GitHub Release。
+3. 在通过 CI 的提交建立新的 `v版本号` tag，上传标准 ZIP、通用安装 ZIP 和两者的 SHA-256 清单到 GitHub Release。
 4. 回读远程 main/tag、Release 资产和下载哈希；用新检出再次运行完整性检查及 MCP 初始化。
 5. 公布新版本及安装/升级步骤。GitHub 发布不会自动更新个人私有版或部署业务服务器。
 
@@ -90,5 +91,7 @@ node scripts/smoke.mjs --plugin-root /actual/installed/plugin
 ## 5. 归档和回退
 
 `npm run package` 只打包 `plugins/110lab`，产物包含一个顶层 `110lab/` 目录和全部隐藏文件，写入忽略的 `artifacts/`。归档使用固定条目顺序和时间，不包含市场目录、源码工作区或维护依赖。
+
+`npm run package:portable` 另外生成 `110lab-portable-版本号.zip`，用于 WorkBuddy 和 DeepSeek Harness 的首次安装。通用启动程序继续从每个 GitHub Release 的 `110lab-plugin-版本号.zip` 获取新版，正式更新资产的名称和目录结构保持一致。[通用 MCP 使用指南](PORTABLE-MCP.md)
 
 回退使用 README 的指定 tag 安装步骤；撤回 main 改动使用新的 revert 提交。插件回退不回滚服务器数据、权限或本机凭据。本仓库未额外授予上游代码的开源许可，第三方组件继续遵循各 NOTICE / LICENSE。
